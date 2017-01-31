@@ -1,0 +1,415 @@
+<<<<<<< HEAD
+package com.group10.sparkysbank.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.support.SessionStatus;
+
+import com.group10.sparkysbank.model.Useraccounts;
+import com.group10.sparkysbank.model.Userinfo;
+import com.group10.sparkysbank.service.AccountManagerService;
+import com.group10.sparkysbank.service.UserService;
+import com.group10.sparkysbank.validator.UserValidator;
+
+@Controller
+public class UserController {
+
+	@Autowired
+	UserService userService;
+	
+	@Autowired
+	AccountManagerService accountManagerService;
+
+	@Autowired
+	UserValidator userValidator;
+
+	@Autowired
+	PasswordEncoder encoder;
+
+	@RequestMapping(value="/addExtUser",method=RequestMethod.POST)
+	public String submitForm(ModelMap model, @ModelAttribute ("extUser") @Validated Userinfo userInfo, BindingResult result, SessionStatus status, HttpServletRequest request, HttpServletResponse response)
+	{
+		String que1=request.getParameter("sec1").toString();
+		String que2=request.getParameter("sec2").toString();
+
+		String ans1=request.getParameter("sec1ans").toString();
+		String ans2=request.getParameter("sec2ans").toString();
+		if(que1.equals(que2))
+		{
+			model.addAttribute("error", "error");
+			result.addError(new ObjectError("", "asda"));
+		}
+
+		if(ans1.equals("") || ans1==null || ans2.equals("") || ans2==null)
+		{
+			model.addAttribute("ans","ans");
+			result.addError(new ObjectError("", "asdad"));
+		}
+		userValidator.validate(userInfo, result);
+
+		if(result.hasErrors())
+		{
+			System.out.println("error");
+			return "addExternalUserAccount";
+		}
+		System.out.println(userInfo.getFirstname());
+		String pass=userInfo.getPassword();
+		userInfo.setPassword(encoder.encode(pass));
+
+
+		int accno=userService.addNewExternalUuser(userInfo,que1,que2,ans1,ans2);
+
+		model.addAttribute("accno", accno);
+		return "addExternalUserAccount";
+	}
+
+	//Author: Sravya
+	
+	//VIEW
+	@RequestMapping(value="/UserAccountManagement",method=RequestMethod.GET)
+	public String viewUserAccessInfo(Model model)
+	{
+		model.addAttribute("accessInfo", new Userinfo());
+		return "usrAccMgmt";
+	}
+	
+/*	@RequestMapping(value="/usrAccMgmtAccess",method=RequestMethod.POST)
+	public String viewUserAccessInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		System.out.println(userInfo.getIdentificationid() + userInfo.getUsername());
+		if(result.hasErrors()||userService.getUserInfo(userInfo)==null)
+		{
+			System.out.println("error");
+			return "internalHome";
+		}
+		model.addAttribute("userInfoObj", userService.getUserInfo(userInfo));
+		return "usrAccMgmtAccessForm";
+	}*/
+	
+	@RequestMapping(value="/UserAccountManagement",method=RequestMethod.POST)
+	public String viewUserInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		model.addAttribute("accessInfo", userService.getUserInfo(userInfo));
+		if(result.hasErrors()||userService.getUserInfo(userInfo)==null)
+		{
+			System.out.println("error");
+			return "internalHome";
+		}
+		model.addAttribute("userInfoObj", userService.getUserInfo(userInfo));
+		return "usrAccMgmt";
+	}
+	
+	//EDIT
+	@RequestMapping(value="/UserAccountManagementEdit",method=RequestMethod.GET)
+	public String updateUserInfo(Model model)
+	{
+		model.addAttribute("accessInfo", new Userinfo());
+		return "usrAccMgmtEdit";
+	}
+	
+	@RequestMapping(value="/UserAccountManagementEdit",method=RequestMethod.POST)
+	public String updateUserInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		//case where the verification credentials are posted
+		if(userInfo.getEmail()==null && userInfo.getAddress()==null)
+		{
+			Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+			model.addAttribute("accessInfo", userService.getUserInfo(userInfo));
+			return "usrAccMgmtEdit";
+		}
+		//case where the update is being made
+		else
+		{
+		   Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+		   if(userInfo.getAddress() != ui.getAddress())
+			    {
+			    	ui.setAddress(userInfo.getAddress());
+			    }
+		   if(userInfo.getEmail() != ui.getEmail())
+			    {
+			    	ui.setEmail(userInfo.getEmail());
+			    }
+		   userService.updateUserInfo(ui);
+		   model.addAttribute("accessInfo", userService.getUserInfobyUserName(userInfo.getUsername()));
+		   return "usrAccMgmtEdit";
+		}
+	}
+	
+	//DELETE
+	@RequestMapping(value="/UserAccountManagementDelete",method=RequestMethod.GET)
+	public String deleteUserInfo(Model model)
+	{
+		model.addAttribute("accessInfo", new Userinfo());
+		return "usrAccMgmtDelete";
+	}
+	
+	@RequestMapping(value="/UserAccountManagementDelete",method=RequestMethod.POST)
+	public String deleteUserInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		//case where the verification credentials are posted
+		if(userInfo.getEmail()==null)
+		{
+			Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+			model.addAttribute("accessInfo", userService.getUserInfo(userInfo));
+			return "usrAccMgmtDelete";
+		}
+		//case where the delete is being made
+		else
+		{
+		   Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+		   userService.deleteUserInfo(ui);
+		   return "usrAccMgmtDeleteMessage";
+		}
+	}
+}
+=======
+package com.group10.sparkysbank.controller;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import net.tanesha.recaptcha.ReCaptcha;
+import net.tanesha.recaptcha.ReCaptchaResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.support.SessionStatus;
+
+import com.group10.sparkysbank.model.Useraccounts;
+import com.group10.sparkysbank.model.Userinfo;
+import com.group10.sparkysbank.service.AccountManagerService;
+import com.group10.sparkysbank.service.UserService;
+import com.group10.sparkysbank.validator.UserValidator;
+
+@Controller
+public class UserController {
+
+	@Autowired
+	UserService userService;
+	
+	@Autowired
+	AccountManagerService accountManagerService;
+
+	@Autowired
+	UserValidator userValidator;
+
+	@Autowired
+	PasswordEncoder encoder;
+
+	@Autowired
+	private ReCaptcha recaptcha; 
+	@RequestMapping(value="/addExtUser",method=RequestMethod.POST)
+	public String submitForm(ModelMap model, @ModelAttribute ("extUser") @Validated Userinfo userInfo, BindingResult result, SessionStatus status, HttpServletRequest request, HttpServletResponse response,ServletRequest servletRequest)
+	{
+		System.out.println("hello");
+		String challangeField=request.getParameter("recaptcha_challenge_field").toString();
+		String responseField=request.getParameter("recaptcha_response_field").toString();
+		System.out.println("Secret="+challangeField);
+		System.out.println("Secret="+responseField);
+
+		String remoteAddress = servletRequest.getRemoteAddr();
+				 ReCaptchaResponse reCaptchaResponse = this.recaptcha.checkAnswer(remoteAddress, challangeField, responseField);
+		 if(!reCaptchaResponse.isValid()) {
+			 model.addAttribute("captchaerror", "captchaerror");
+			result.addError(new ObjectError("", "captchaerror"));
+			return "addExternalUserAccount";
+		 }
+		String que1=request.getParameter("sec1").toString();
+		String que2=request.getParameter("sec2").toString();
+
+		String ans1=request.getParameter("sec1ans").toString();
+		String ans2=request.getParameter("sec2ans").toString();
+		if(que1.equals(que2))
+		{
+			model.addAttribute("error", "error");
+			result.addError(new ObjectError("", "asda"));
+		}
+
+		if(ans1.equals("") || ans1==null || ans2.equals("") || ans2==null)
+		{
+			model.addAttribute("ans","ans");
+			result.addError(new ObjectError("", "asdad"));
+		}
+		userValidator.validate(userInfo, result);
+
+		if(result.hasErrors())
+		{
+			System.out.println("error");
+			return "addExternalUserAccount";
+		}
+		System.out.println(userInfo.getFirstname());
+		String pass=userInfo.getPassword();
+		userInfo.setPassword(encoder.encode(pass));
+
+
+		int accno=userService.addNewExternalUuser(userInfo,que1,que2,ans1,ans2);
+
+		model.addAttribute("accno", accno);
+		return "addExternalUserAccount";
+		
+}
+	@RequestMapping(value="/addExtUser1",method=RequestMethod.POST)
+	public String submitForm1(ModelMap model, @ModelAttribute ("extUser") @Validated Userinfo userInfo, BindingResult result, SessionStatus status, HttpServletRequest request, HttpServletResponse response)
+	{
+		System.out.println("check");
+		return "addExternalUserAccount";
+	}
+/*	@RequestMapping(value="/addExtUser",method=RequestMethod.POST)
+	public String submitForm(ModelMap model, @ModelAttribute ("extUser") @Validated Userinfo userInfo, BindingResult result, SessionStatus status, HttpServletRequest request, HttpServletResponse response)
+	{
+		String que1=request.getParameter("sec1").toString();
+		String que2=request.getParameter("sec2").toString();
+
+		String ans1=request.getParameter("sec1ans").toString();
+		String ans2=request.getParameter("sec2ans").toString();
+		if(que1.equals(que2))
+		{
+			model.addAttribute("error", "error");
+			result.addError(new ObjectError("", "asda"));
+		}
+
+		if(ans1.equals("") || ans1==null || ans2.equals("") || ans2==null)
+		{
+			model.addAttribute("ans","ans");
+			result.addError(new ObjectError("", "asdad"));
+		}
+		userValidator.validate(userInfo, result);
+
+		if(result.hasErrors())
+		{
+			System.out.println("error");
+			return "addExternalUserAccount";
+		}
+		System.out.println(userInfo.getFirstname());
+		String pass=userInfo.getPassword();
+		userInfo.setPassword(encoder.encode(pass));
+
+
+		int accno=userService.addNewExternalUuser(userInfo,que1,que2,ans1,ans2);
+
+		model.addAttribute("accno", accno);
+		return "addExternalUserAccount";
+	}
+*/
+	//Author: Sravya
+	
+	//VIEW
+	@RequestMapping(value="/UserAccountManagement",method=RequestMethod.GET)
+	public String viewUserAccessInfo(Model model)
+	{
+		model.addAttribute("accessInfo", new Userinfo());
+		return "usrAccMgmt";
+	}
+	
+/*	@RequestMapping(value="/usrAccMgmtAccess",method=RequestMethod.POST)
+	public String viewUserAccessInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		System.out.println(userInfo.getIdentificationid() + userInfo.getUsername());
+		if(result.hasErrors()||userService.getUserInfo(userInfo)==null)
+		{
+			System.out.println("error");
+			return "internalHome";
+		}
+		model.addAttribute("userInfoObj", userService.getUserInfo(userInfo));
+		return "usrAccMgmtAccessForm";
+	}*/
+	
+	@RequestMapping(value="/UserAccountManagement",method=RequestMethod.POST)
+	public String viewUserInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		model.addAttribute("accessInfo", userService.getUserInfo(userInfo));
+		if(result.hasErrors()||userService.getUserInfo(userInfo)==null)
+		{
+			System.out.println("error");
+			return "internalHome";
+		}
+		model.addAttribute("userInfoObj", userService.getUserInfo(userInfo));
+		return "usrAccMgmt";
+	}
+	
+	//EDIT
+	@RequestMapping(value="/UserAccountManagementEdit",method=RequestMethod.GET)
+	public String updateUserInfo(Model model)
+	{
+		model.addAttribute("accessInfo", new Userinfo());
+		return "usrAccMgmtEdit";
+	}
+	
+	@RequestMapping(value="/UserAccountManagementEdit",method=RequestMethod.POST)
+	public String updateUserInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		//case where the verification credentials are posted
+		if(userInfo.getEmail()==null && userInfo.getAddress()==null)
+		{
+			Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+			model.addAttribute("accessInfo", userService.getUserInfo(userInfo));
+			return "usrAccMgmtEdit";
+		}
+		//case where the update is being made
+		else
+		{
+		   Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+		   if(userInfo.getAddress() != ui.getAddress())
+			    {
+			    	ui.setAddress(userInfo.getAddress());
+			    }
+		   if(userInfo.getEmail() != ui.getEmail())
+			    {
+			    	ui.setEmail(userInfo.getEmail());
+			    }
+		   userService.updateUserInfo(ui);
+		   model.addAttribute("accessInfo", userService.getUserInfobyUserName(userInfo.getUsername()));
+		   return "usrAccMgmtEdit";
+		}
+	}
+	
+	//DELETE
+	@RequestMapping(value="/UserAccountManagementDelete",method=RequestMethod.GET)
+	public String deleteUserInfo(Model model)
+	{
+		model.addAttribute("accessInfo", new Userinfo());
+		return "usrAccMgmtDelete";
+	}
+	
+	@RequestMapping(value="/UserAccountManagementDelete",method=RequestMethod.POST)
+	public String deleteUserInfo(@ModelAttribute ("accessInfo")Userinfo userInfo, BindingResult result, SessionStatus status,Model model)
+	{
+		//case where the verification credentials are posted
+		if(userInfo.getEmail()==null)
+		{
+			Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+			model.addAttribute("accessInfo", userService.getUserInfo(userInfo));
+			return "usrAccMgmtDelete";
+		}
+		//case where the delete is being made
+		else
+		{
+		   Userinfo ui = userService.getUserInfobyUserName(userInfo.getUsername());
+		   userService.deleteUserInfo(ui);
+		   return "usrAccMgmtDeleteMessage";
+		}
+	}
+}
+>>>>>>> ec2e64c830271107c30fd3060708b9b114b1159d

@@ -1,0 +1,41 @@
+<<<<<<< HEAD
+package com.group10.sparkysbank.dao;
+
+import java.util.Set;
+
+import com.group10.sparkysbank.model.Pwdrecovery;
+import com.group10.sparkysbank.model.Roles;
+import com.group10.sparkysbank.model.UserRoles;
+import com.group10.sparkysbank.model.Useraccounts;
+import com.group10.sparkysbank.model.Userinfo;
+
+
+public interface UserInfoDAO {
+
+	public Userinfo findUserByUsername(String username);
+	public int registerNewUserAccount(Userinfo userInfo,Useraccounts account,Pwdrecovery sec,UserRoles roles);
+	public Set<String> getRolesByUserId(String username);
+	public void updateUserInfo(Userinfo userInfo);
+	public void deleteUserInfo(Userinfo userInfo);
+}
+=======
+package com.group10.sparkysbank.dao;
+
+import java.util.Set;
+
+import com.group10.sparkysbank.model.Pwdrecovery;
+import com.group10.sparkysbank.model.Roles;
+import com.group10.sparkysbank.model.UserRoles;
+import com.group10.sparkysbank.model.Useraccounts;
+import com.group10.sparkysbank.model.Userinfo;
+
+
+public interface UserInfoDAO {
+
+	public Userinfo findUserByUsername(String username);
+	public int registerNewUserAccount(Userinfo userInfo,Useraccounts account,Pwdrecovery sec,UserRoles roles);
+	public Set<String> getRolesByUserId(String username);
+	public void updateUserInfo(Userinfo userInfo);
+	public void deleteUserInfo(Userinfo userInfo);
+}
+>>>>>>> ec2e64c830271107c30fd3060708b9b114b1159d

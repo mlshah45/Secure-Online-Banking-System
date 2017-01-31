@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<http use-expressions="true">
+    
+		<intercept-url pattern="/resources/**" access="permitAll"/>
+		<intercept-url pattern="/logout" access="permitAll"/>
+		<intercept-url pattern="/login" access="permitAll"/>
+		<intercept-url pattern="/forgotpassword" access="permitAll"/>
+		<intercept-url pattern="/loginFailed" access="permitAll"/>
+
+        <intercept-url pattern="/transRejectViewProfile" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>	
+        <intercept-url pattern="/transApproveViewProfile" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>	
+		<intercept-url pattern="/viewMyProfile" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>	
+		<intercept-url pattern="/requestEdit" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>	
+		<intercept-url pattern="/transactionReviewRequest" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>	
+		<intercept-url pattern="/AuthorizeProfileView" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>	
+		<intercept-url pattern="/ExtUserProfileViewReq" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>		
+		<intercept-url pattern="/ExtUserRequests" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>		
+		<intercept-url pattern="/home" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE', 'ROLE_MERCHANT', 'ROLE_CUSTOMER')"/>
+		<intercept-url pattern="/transApprove" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/transReject" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/AuthorizeTransactions" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/EditExtProfile" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/RejectUpdate" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/ViewEmpProfile" access="hasRole('ROLE_ADMIN')"/>
+		<intercept-url pattern="/EditEmpProfile" access="hasRole('ROLE_ADMIN')"/>
+		<intercept-url pattern="/DeleteEmpProfile" access="hasRole('ROLE_ADMIN')"/>
+		<intercept-url pattern="/viewTransactions" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/UserAccountManagement" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/UserAccountManagementEdit" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/UserAccountManagementDelete" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/UserAccountManagementActivity" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/usrAccMgmtAccess" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/TransactionManagement" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+			<intercept-url pattern="/verifyMerchant" access="hasRole('ROLE_CUSTOMER')"/>
+		<intercept-url pattern="/paymentSubmitted" access="hasRole('ROLE_MERCHANT')"/>
+		<intercept-url pattern="/paymentsFromMerchant" access="hasRole('ROLE_CUSTOMER')"/>
+			<intercept-url pattern="/submitPayment" access="hasRole('ROLE_MERCHANT')"/>
+		<intercept-url pattern="/approvedTransactions" access="hasRole('ROLE_MERCHANT')"/>
+		<intercept-url pattern="/verifyCustomer" access="hasRole('ROLE_MERCHANT')"/>
+		
+		<intercept-url pattern="/int**" access="hasAnyRole('ROLE_ADMIN','ROLE_EMPLOYEE')"/>
+		<intercept-url pattern="/register" access="hasRole('ROLE_ADMIN')"/>
+		<intercept-url pattern="/extHome" access="hasRole('ROLE_MERCHANT')"/>
+		<intercept-url pattern="/addExtUser" access="hasRole('ROLE_ADMIN')"/>
+		<intercept-url pattern="/transfer" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>
+		<intercept-url pattern="/credit" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>
+		<intercept-url pattern="/debit" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>
+		<intercept-url pattern="/hello1" access="hasAnyRole('ROLE_CUSTOMER','ROLE_MERCHANT')"/>
+		<intercept-url pattern="/extCustomerHome" access="hasRole('ROLE_CUSTOMER')"/>
+		<intercept-url pattern="/hello" access="permitAll"/>
+		<intercept-url pattern="/403" access="permitAll" />
+		<intercept-url pattern="/otpVerify" access="permitAll" />
+		<intercept-url pattern="/changePassword" access="permitAll" />
+		<intercept-url pattern="/**" access="denyAll" />
+		<form-login login-page="/login" authentication-failure-url="/loginFailed" authentication-success-handler-ref="roleBasedControl"/>
+		<access-denied-handler error-page="/403"/>
+		<logout logout-success-url="/logout"/>
+	</http>
+
+	<beans:bean id="roleBasedControl" class="com.group10.sparkysbank.service.RoleBasedSecurityService">
+		
+	</beans:bean>
+
+	<authentication-manager>
+		<authentication-provider user-service-ref="loginService">
+		<password-encoder ref="encoder"/>
+		</authentication-provider>
+	</authentication-manager>
+
+	<beans:bean id="encoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+	<beans:bean id="daoAuthenticationProvider"
+		class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+		<beans:property name="userDetailsService" ref="loginService"></beans:property>
+	</beans:bean>
+
+	<beans:bean id="authenticationManager"
+		class="org.springframework.security.authentication.ProviderManager">
+		<beans:property name="providers">
+			<beans:list>
+				<beans:ref bean="daoAuthenticationProvider" />
+			</beans:list>
+		</beans:property>
+	</beans:bean>
+
+</beans:beans>
